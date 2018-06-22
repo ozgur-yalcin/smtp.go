@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
+	"mailer/config"
+	"mailer/src"
 	"net/mail"
-	"smtp/config"
-	"smtp/src"
 )
 
 func init() {
@@ -15,12 +15,12 @@ func init() {
 }
 
 func main() {
-	maildata := smtp.MailData{}
+	maildata := mailer.MailData{}
 	maildata.Body.From = mail.Address{"Name", "mail@example.com"}
 	maildata.Body.To = mail.Address{"Name", "mail@example.com"}
 	maildata.Body.Subject = "Title"
 	maildata.Body.Msg = "Message"
-	send := smtp.Mail(maildata)
+	send := mailer.Mail(maildata)
 	if send {
 		fmt.Println("SENT")
 	} else {

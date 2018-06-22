@@ -1,12 +1,12 @@
-package smtp
+package mailer
 
 import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
+	"mailer/config"
 	"net/mail"
 	"net/smtp"
-	"smtp/config"
 	"strings"
 )
 
