@@ -19,7 +19,7 @@ func main() {
 	api := new(mailer.API)
 	api.Lock()
 	defer api.Unlock()
-	request := mailer.Request{}
+	request := new(mailer.Request)
 	request.Body.From = mail.Address{"Name", "mail@example.com"}
 	request.Body.To = mail.Address{"Name", "mail@example.com"}
 	request.Body.Subject = "Title"
