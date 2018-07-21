@@ -26,7 +26,7 @@ type Request struct {
 	} `xml:"body,omitempty"`
 }
 
-func (api *API) Mail(request Request) bool {
+func (api *API) Mail(request *Request) bool {
 	message := []string{}
 	header := make(map[string]string)
 	header["To"] = request.Body.To.String()
