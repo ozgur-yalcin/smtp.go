@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/mail"
 
-	config "github.com/OzqurYalcin/mailer/config"
-	mailer "github.com/OzqurYalcin/mailer/src"
+	"github.com/OzqurYalcin/mailer/config"
+	"github.com/OzqurYalcin/mailer/src"
 )
 
 func init() {

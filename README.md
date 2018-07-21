@@ -7,15 +7,21 @@ If you discover any security related issues, please email ozguryalcin@outlook.co
 # License
 The MIT License (MIT). Please see License File for more information.
 
+# Installation
+```bash
+go get github.com/OzqurYalcin/mailer
+```
+
 
 ```go
 package main
 
 import (
 	"fmt"
-	"mailer/config"
-	"mailer/src"
 	"net/mail"
+
+	"github.com/OzqurYalcin/mailer/config"
+	"github.com/OzqurYalcin/mailer/src"
 )
 
 func init() {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	config "github.com/OzqurYalcin/mailer/config"
+	"github.com/OzqurYalcin/mailer/config"
 )
 
 type API struct {
