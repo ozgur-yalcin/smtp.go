@@ -1,4 +1,4 @@
-# mailer
+# Mailer
 Simple library for sending utf-8 e-mail via smtp with golang
 
 # Security
@@ -12,7 +12,7 @@ The MIT License (MIT). Please see License File for more information.
 go get github.com/OzqurYalcin/mailer
 ```
 
-
+# Usage
 ```go
 package main
 
