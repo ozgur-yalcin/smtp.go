@@ -4,11 +4,12 @@ import (
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
-	"mailer/config"
 	"net/mail"
 	"net/smtp"
 	"strings"
 	"sync"
+
+	"github.com/OzqurYalcin/mailer/config"
 )
 
 type API struct {
