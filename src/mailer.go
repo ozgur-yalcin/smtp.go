@@ -44,19 +44,21 @@ func (api *API) Mail(request *Request) bool {
 	message = append(message, fmt.Sprintf("%s: %s", "Subject", request.Body.Subject))
 	message = append(message, fmt.Sprintf("%s: %s", "MIME-Version", `1.0`))
 	if len(request.Body.Files) > 0 {
+		msg := fmt.Sprintf("%s", request.Body.Msg)
 		boundary := api.Boundary()
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary=`+boundary))
 		message = append(message, fmt.Sprintf("--%s", boundary))
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-		message = append(message, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s", request.Body.Msg))))
+		message = append(message, base64.StdEncoding.EncodeToString([]byte(msg)))
 		message = append(message, fmt.Sprintf("--%s", boundary))
 		for _, file := range request.Body.Files {
-			content, err := ioutil.ReadFile(fmt.Sprintf("%s", file))
+			filename := fmt.Sprintf("%s", file)
+			content, err := ioutil.ReadFile(filename)
 			if err == nil {
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `application/octet-stream`))
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment; filename=`+path.Base(fmt.Sprintf("%s", file))))
+				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment; filename=`+path.Base(filename)))
 				message = append(message, base64.StdEncoding.EncodeToString(content))
 				message = append(message, fmt.Sprintf("--%s", boundary))
 			} else {
@@ -64,9 +66,10 @@ func (api *API) Mail(request *Request) bool {
 			}
 		}
 	} else {
+		msg := fmt.Sprintf("%s", request.Body.Msg)
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-		message = append(message, base64.StdEncoding.EncodeToString([]byte(request.Body.Msg)))
+		message = append(message, base64.StdEncoding.EncodeToString([]byte(msg)))
 	}
 	auth := smtp.PlainAuth("", config.MailUser, config.MailPass, config.MailHost)
 	addr := config.MailHost + ":" + config.MailPort
