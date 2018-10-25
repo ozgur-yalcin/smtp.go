@@ -65,27 +65,35 @@ func (api *API) AttachFile(filepath string) bool {
 	if api.Boundary != nil {
 		file, err := ioutil.ReadFile(filepath)
 		if err == nil {
-			attachment := []string{}
-			attachment = append(attachment, fmt.Sprintf("%s", ""))
-			attachment = append(attachment, fmt.Sprintf("--%s", api.Boundary.(string)))
-			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment`))
-			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Type", http.DetectContentType(file)+`;name="`+path.Base(filepath)+`"`))
-			attachment = append(attachment, fmt.Sprintf("%s", ""))
-			api.Buffer.WriteString(strings.Join(attachment, "\r\n"))
-			b := make([]byte, base64.StdEncoding.EncodedLen(len(file)))
-			base64.StdEncoding.Encode(b, file)
-			api.Buffer.WriteString("\r\n")
-			for i, l := 0, len(b); i < l; i++ {
-				api.Buffer.WriteByte(b[i])
-				if (i+1)%76 == 0 {
-					api.Buffer.WriteString("\r\n")
-				}
-			}
-			return true
+			return api.AttachFileBytes(path.Base(filepath), file)
 		} else {
 			return false
 		}
+	} else {
+		return false
+	}
+}
+
+func (api *API) AttachFileBytes(name string, file []byte) bool {
+	if api.Boundary != nil {
+		attachment := []string{}
+		attachment = append(attachment, fmt.Sprintf("%s", ""))
+		attachment = append(attachment, fmt.Sprintf("--%s", api.Boundary.(string)))
+		attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
+		attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment`))
+		attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Type", http.DetectContentType(file)+`;name="`+name+`"`))
+		attachment = append(attachment, fmt.Sprintf("%s", ""))
+		api.Buffer.WriteString(strings.Join(attachment, "\r\n"))
+		b := make([]byte, base64.StdEncoding.EncodedLen(len(file)))
+		base64.StdEncoding.Encode(b, file)
+		api.Buffer.WriteString("\r\n")
+		for i, l := 0, len(b); i < l; i++ {
+			api.Buffer.WriteByte(b[i])
+			if (i+1)%76 == 0 {
+				api.Buffer.WriteString("\r\n")
+			}
+		}
+		return true
 	} else {
 		return false
 	}
