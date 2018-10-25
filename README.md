@@ -24,24 +24,21 @@ import (
 func init() {
 	config.MailHost = "" // Mail Host
 	config.MailPort = "" // Mail Port
-	config.MailUser = "" // Kullanıcı Adı
-	config.MailPass = "" // Şifre
+	config.MailUser = "" // Mail Username
+	config.MailPass = "" // Mail Password
 }
 
 func main() {
 	api := new(mailer.API)
 	api.Lock()
 	defer api.Unlock()
-	request := new(mailer.Request)
-	request.Body.From = mail.Address{"Name", "mail@example.com"}
-	request.Body.To = mail.Address{"Name", "mail@example.com"}
-	request.Body.Subject = "Title"
-	request.Body.Msg = "Message"
-	send := api.Mail(request)
+	api.SetHeaders(mail.Address{"From", "from@example.com"}, mail.Address{"To", "to@example.com"}, "Title", "Message")
+	// api.AttachFile("file.pdf")
+	send := api.Send()
 	if send {
-		fmt.Println("e-posta iletildi")
+		fmt.Println("SENT!")
 	} else {
-		fmt.Println("hata oluştu")
+		fmt.Println("ERROR")
 	}
 }
 ```

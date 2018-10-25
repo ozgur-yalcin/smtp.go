@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"crypto/rand"
 	"encoding/base64"
-	"encoding/xml"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/mail"
 	"net/smtp"
+	"path"
 	"strings"
 	"sync"
 
@@ -19,84 +19,90 @@ import (
 
 type API struct {
 	sync.Mutex
+	Buffer   *bytes.Buffer
+	Boundary interface{}
+	Body     struct {
+		To      mail.Address
+		From    mail.Address
+		Subject interface{}
+		Message interface{}
+	}
 }
 
-type Request struct {
-	XMLName xml.Name `xml:"xml,omitempty"`
-	Body    struct {
-		To      mail.Address  `xml:"to,omitempty"`
-		From    mail.Address  `xml:"from,omitempty"`
-		Subject interface{}   `xml:"subject,omitempty"`
-		Msg     interface{}   `xml:"msg,omitempty"`
-		Files   []interface{} `xml:"files,omitempty"`
-	} `xml:"body,omitempty"`
+func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) {
+	api.Buffer = bytes.NewBuffer(nil)
+	api.SetBoundary()
+	api.Body.From = from
+	api.Body.To = to
+	api.Body.Subject = subject
+	api.Body.Message = message
+	header := []string{}
+	header = append(header, fmt.Sprintf("%s: %s", "To", api.Body.To.String()))
+	header = append(header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
+	header = append(header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
+	header = append(header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
+	header = append(header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary="`+api.Boundary.(string)+`"`))
+	header = append(header, fmt.Sprintf("%s", ""))
+	header = append(header, fmt.Sprintf("--%s", api.Boundary.(string)))
+	header = append(header, fmt.Sprintf("%s", ""))
+	api.Buffer.WriteString(strings.Join(header, "\r\n"))
+	content := []string{}
+	content = append(content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=UTF-8`))
+	content = append(content, fmt.Sprintf("%s", ""))
+	content = append(content, fmt.Sprintf("%s", api.Body.Message))
+	api.Buffer.WriteString(strings.Join(content, "\r\n"))
+	return
 }
 
-func (api *API) Boundary() string {
+func (api *API) SetBoundary() {
 	var buf [30]byte
 	io.ReadFull(rand.Reader, buf[:])
-	return fmt.Sprintf("%x", buf[:])
+	api.Boundary = fmt.Sprintf("%x", buf[:])
+	return
 }
 
-func (api *API) Mail(request *Request) bool {
-	buffer := bytes.NewBuffer(nil)
-	boudary := api.Boundary()
-	breakline := "\r\n"
-	if len(request.Body.Files) > 0 {
-		header := []string{}
-		header = append(header, fmt.Sprintf("%s: %s", "To", request.Body.To.String()))
-		header = append(header, fmt.Sprintf("%s: %s", "From", request.Body.From.String()))
-		header = append(header, fmt.Sprintf("%s: %s", "Subject", request.Body.Subject))
-		header = append(header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
-		header = append(header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary="`+boudary+`"`))
-		header = append(header, fmt.Sprintf("%s", ""))
-		header = append(header, fmt.Sprintf("--%s", boudary))
-		header = append(header, fmt.Sprintf("%s", ""))
-		buffer.WriteString(strings.Join(header, breakline))
-		content := []string{}
-		content = append(content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=UTF-8`))
-		content = append(content, fmt.Sprintf("%s", ""))
-		content = append(content, fmt.Sprintf("%s", request.Body.Msg))
-		buffer.WriteString(strings.Join(content, breakline))
-		for _, filename := range request.Body.Files {
-			f := fmt.Sprintf("%s", filename)
-			file, _ := ioutil.ReadFile(f)
+func (api *API) AttachFile(filepath string) bool {
+	if api.Boundary != nil {
+		file, err := ioutil.ReadFile(filepath)
+		if err == nil {
 			attachment := []string{}
 			attachment = append(attachment, fmt.Sprintf("%s", ""))
-			attachment = append(attachment, fmt.Sprintf("--%s", boudary))
+			attachment = append(attachment, fmt.Sprintf("--%s", api.Boundary.(string)))
 			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
 			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment`))
-			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Type", http.DetectContentType(file)+`;name="`+f+`"`))
+			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Type", http.DetectContentType(file)+`;name="`+path.Base(filepath)+`"`))
 			attachment = append(attachment, fmt.Sprintf("%s", ""))
-			buffer.WriteString(strings.Join(attachment, breakline))
+			api.Buffer.WriteString(strings.Join(attachment, "\r\n"))
 			b := make([]byte, base64.StdEncoding.EncodedLen(len(file)))
 			base64.StdEncoding.Encode(b, file)
-			buffer.WriteString(breakline)
+			api.Buffer.WriteString("\r\n")
 			for i, l := 0, len(b); i < l; i++ {
-				buffer.WriteByte(b[i])
+				api.Buffer.WriteByte(b[i])
 				if (i+1)%76 == 0 {
-					buffer.WriteString(breakline)
+					api.Buffer.WriteString("\r\n")
 				}
 			}
+			return true
+		} else {
+			return false
 		}
-		buffer.WriteString(breakline)
-		buffer.WriteString("--" + boudary + "--")
 	} else {
-		content := []string{}
-		content = append(content, fmt.Sprintf("%s: %s", "To", request.Body.To.String()))
-		content = append(content, fmt.Sprintf("%s: %s", "From", request.Body.From.String()))
-		content = append(content, fmt.Sprintf("%s: %s", "Subject", request.Body.Subject))
-		content = append(content, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
-		content = append(content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=UTF-8`))
-		content = append(content, fmt.Sprintf("%s", ""))
-		content = append(content, fmt.Sprintf("%s", request.Body.Msg))
-		buffer.WriteString(strings.Join(content, breakline))
-	}
-	auth := smtp.PlainAuth("", config.MailUser, config.MailPass, config.MailHost)
-	addr := config.MailHost + ":" + config.MailPort
-	err := smtp.SendMail(addr, auth, request.Body.From.Address, []string{request.Body.To.Address}, buffer.Bytes())
-	if err != nil {
 		return false
 	}
-	return true
+}
+
+func (api *API) Send() bool {
+	if api.Boundary != nil {
+		api.Buffer.WriteString("\r\n")
+		api.Buffer.WriteString("--" + api.Boundary.(string) + "--")
+		auth := smtp.PlainAuth("", config.MailUser, config.MailPass, config.MailHost)
+		addr := config.MailHost + ":" + config.MailPort
+		err := smtp.SendMail(addr, auth, api.Body.From.Address, []string{api.Body.To.Address}, api.Buffer.Bytes())
+		if err != nil {
+			return false
+		}
+		return true
+	} else {
+		return false
+	}
 }
