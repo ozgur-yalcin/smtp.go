@@ -23,11 +23,11 @@ type API struct {
 type Request struct {
 	XMLName xml.Name `xml:"xml,omitempty"`
 	Body    struct {
-		To      mail.Address `xml:"to,omitempty"`
-		From    mail.Address `xml:"from,omitempty"`
-		Subject string       `xml:"subject,omitempty"`
-		Msg     string       `xml:"msg,omitempty"`
-		Files   []string     `xml:"files,omitempty"`
+		To      mail.Address  `xml:"to,omitempty"`
+		From    mail.Address  `xml:"from,omitempty"`
+		Subject interface{}   `xml:"subject,omitempty"`
+		Msg     interface{}   `xml:"msg,omitempty"`
+		Files   []interface{} `xml:"files,omitempty"`
 	} `xml:"body,omitempty"`
 }
 
@@ -49,14 +49,14 @@ func (api *API) Mail(request *Request) bool {
 		message = append(message, fmt.Sprintf("--%s", boundary))
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
 		message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-		message = append(message, base64.StdEncoding.EncodeToString([]byte(request.Body.Msg)))
+		message = append(message, base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s", request.Body.Msg))))
 		message = append(message, fmt.Sprintf("--%s", boundary))
 		for _, file := range request.Body.Files {
-			content, err := ioutil.ReadFile(file)
+			content, err := ioutil.ReadFile(fmt.Sprintf("%s", file))
 			if err == nil {
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `application/octet-stream`))
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment; filename=`+path.Base(file)))
+				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment; filename=`+path.Base(fmt.Sprintf("%s", file))))
 				message = append(message, base64.StdEncoding.EncodeToString(content))
 				message = append(message, fmt.Sprintf("--%s", boundary))
 			} else {
