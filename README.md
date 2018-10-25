@@ -1,5 +1,5 @@
 # Mailer
-Simple library for sending utf-8 e-mail via smtp with golang
+Simple library for sending utf-8 e-mails and attachments via smtp with golang
 
 # License
 The MIT License (MIT). Please see License File for more information.
@@ -32,7 +32,7 @@ func main() {
 	api := new(mailer.API)
 	api.Lock()
 	defer api.Unlock()
-	api.SetHeaders(mail.Address{"From", "from@example.com"}, mail.Address{"To", "to@example.com"}, "Title", "Message")
+	api.SetHeaders(mail.Address{"From Name", "from@example.com"}, mail.Address{"To Name", "to@example.com"}, "Title", "Message")
 	// api.AttachFile("file.pdf")
 	send := api.Send()
 	if send {
