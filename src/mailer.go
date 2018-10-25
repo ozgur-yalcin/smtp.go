@@ -58,6 +58,7 @@ func (api *API) Mail(request *Request) bool {
 			content, err := ioutil.ReadFile(filename)
 			filetype := http.DetectContentType(content)
 			if err == nil {
+				fmt.Println(filetype)
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Type", filetype))
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment; filename=`+path.Base(filename)))
