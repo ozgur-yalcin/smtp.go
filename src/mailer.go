@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/mail"
 	"net/smtp"
 	"path"
@@ -55,8 +56,9 @@ func (api *API) Mail(request *Request) bool {
 		for _, file := range request.Body.Files {
 			filename := fmt.Sprintf("%s", file)
 			content, err := ioutil.ReadFile(filename)
+			filetype := http.DetectContentType(content)
 			if err == nil {
-				message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `application/octet-stream`))
+				message = append(message, fmt.Sprintf("%s: %s", "Content-Type", filetype))
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
 				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment; filename=`+path.Base(filename)))
 				message = append(message, base64.StdEncoding.EncodeToString(content))
