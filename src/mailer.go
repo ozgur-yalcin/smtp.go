@@ -1,15 +1,16 @@
 package mailer
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/xml"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"net/mail"
 	"net/smtp"
-	"path"
 	"strings"
 	"sync"
 
@@ -38,44 +39,62 @@ func (api *API) Boundary() string {
 }
 
 func (api *API) Mail(request *Request) bool {
-	message := []string{}
-	message = append(message, fmt.Sprintf("%s: %s", "To", request.Body.To.String()))
-	message = append(message, fmt.Sprintf("%s: %s", "From", request.Body.From.String()))
-	message = append(message, fmt.Sprintf("%s: %s", "Subject", request.Body.Subject))
+	buffer := bytes.NewBuffer(nil)
+	boudary := api.Boundary()
+	breakline := "\r\n"
 	if len(request.Body.Files) > 0 {
-		msg := fmt.Sprintf("%s", request.Body.Msg)
-		boundary := api.Boundary()
-		message = append(message, fmt.Sprintf("%s: %s", "MIME-Version", `1.0`))
-		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary=`+boundary))
-		message = append(message, fmt.Sprintf("--%s", boundary))
-		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
-		message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-		message = append(message, base64.StdEncoding.EncodeToString([]byte(msg)))
-		for _, file := range request.Body.Files {
-			filename := fmt.Sprintf("%s", file)
-			content, err := ioutil.ReadFile(filename)
-			if err == nil {
-				message = append(message, fmt.Sprintf("--%s", boundary))
-				message = append(message, fmt.Sprintf("%s: %s", "MIME-Version", `1.0`))
-				message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`))
-				message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-				message = append(message, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment;filename=`+path.Base(filename)))
-				message = append(message, base64.StdEncoding.EncodeToString(content))
-			} else {
-				return false
+		header := []string{}
+		header = append(header, fmt.Sprintf("%s: %s", "To", request.Body.To.String()))
+		header = append(header, fmt.Sprintf("%s: %s", "From", request.Body.From.String()))
+		header = append(header, fmt.Sprintf("%s: %s", "Subject", request.Body.Subject))
+		header = append(header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
+		header = append(header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary="`+boudary+`"`))
+		header = append(header, fmt.Sprintf("%s", ""))
+		header = append(header, fmt.Sprintf("--%s", boudary))
+		header = append(header, fmt.Sprintf("%s", ""))
+		buffer.WriteString(strings.Join(header, breakline))
+		content := []string{}
+		content = append(content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=UTF-8`))
+		content = append(content, fmt.Sprintf("%s", ""))
+		content = append(content, fmt.Sprintf("%s", request.Body.Msg))
+		buffer.WriteString(strings.Join(content, breakline))
+		for _, filename := range request.Body.Files {
+			f := fmt.Sprintf("%s", filename)
+			file, _ := ioutil.ReadFile(f)
+			attachment := []string{}
+			attachment = append(attachment, fmt.Sprintf("%s", ""))
+			attachment = append(attachment, fmt.Sprintf("--%s", boudary))
+			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
+			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Disposition", `attachment`))
+			attachment = append(attachment, fmt.Sprintf("%s: %s", "Content-Type", http.DetectContentType(file)+`;name="`+f+`"`))
+			attachment = append(attachment, fmt.Sprintf("%s", ""))
+			buffer.WriteString(strings.Join(attachment, breakline))
+			b := make([]byte, base64.StdEncoding.EncodedLen(len(file)))
+			base64.StdEncoding.Encode(b, file)
+			buffer.WriteString(breakline)
+			for i, l := 0, len(b); i < l; i++ {
+				buffer.WriteByte(b[i])
+				if (i+1)%76 == 0 {
+					buffer.WriteString(breakline)
+				}
 			}
 		}
-		message = append(message, fmt.Sprintf("--%s", boundary))
+		buffer.WriteString(breakline)
+		buffer.WriteString("--" + boudary + "--")
 	} else {
-		msg := fmt.Sprintf("%s", request.Body.Msg)
-		message = append(message, fmt.Sprintf("%s: %s", "MIME-Version", `1.0`))
-		message = append(message, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
-		message = append(message, fmt.Sprintf("%s: %s", "Content-Transfer-Encoding", `base64`))
-		message = append(message, base64.StdEncoding.EncodeToString([]byte(msg)))
+		content := []string{}
+		content = append(content, fmt.Sprintf("%s: %s", "To", request.Body.To.String()))
+		content = append(content, fmt.Sprintf("%s: %s", "From", request.Body.From.String()))
+		content = append(content, fmt.Sprintf("%s: %s", "Subject", request.Body.Subject))
+		content = append(content, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
+		content = append(content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=UTF-8`))
+		content = append(content, fmt.Sprintf("%s", ""))
+		content = append(content, fmt.Sprintf("%s", request.Body.Msg))
+		buffer.WriteString(strings.Join(content, breakline))
 	}
 	auth := smtp.PlainAuth("", config.MailUser, config.MailPass, config.MailHost)
 	addr := config.MailHost + ":" + config.MailPort
-	err := smtp.SendMail(addr, auth, request.Body.From.Address, []string{request.Body.To.Address}, []byte(strings.Join(message, "\r\n")))
+	err := smtp.SendMail(addr, auth, request.Body.From.Address, []string{request.Body.To.Address}, buffer.Bytes())
 	if err != nil {
 		return false
 	}
