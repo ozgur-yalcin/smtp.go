@@ -19,7 +19,7 @@ func main() {
 	api := new(mailer.API)
 	api.Lock()
 	defer api.Unlock()
-	api.SetHeaders(mail.Address{"From", "from@example.com"}, mail.Address{"To", "to@example.com"}, "Title", "Message")
+	api.SetHeaders(mail.Address{"From Name", "from@example.com"}, mail.Address{"To Name", "to@example.com"}, "Title", "Message")
 	// api.AttachFile("file.pdf")
 	send := api.Send()
 	if send {
