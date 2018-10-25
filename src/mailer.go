@@ -34,7 +34,7 @@ type Request struct {
 func (api *API) Boundary() string {
 	var buf [30]byte
 	io.ReadFull(rand.Reader, buf[:])
-	return string(buf[:])
+	return fmt.Sprintf("%x", buf[:])
 }
 
 func (api *API) Mail(request *Request) bool {
