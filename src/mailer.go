@@ -12,15 +12,19 @@ import (
 	"net/smtp"
 	"path"
 	"strings"
-	"sync"
-
-	"github.com/OzqurYalcin/mailer/config"
 )
 
+type Config struct {
+	MailHost string
+	MailPort string
+	MailUser string
+	MailPass string
+}
+
 type API struct {
-	sync.Mutex
 	Buffer   *bytes.Buffer
 	Boundary interface{}
+	Config   Config
 	Body     struct {
 		To      mail.Address
 		From    mail.Address
@@ -103,8 +107,8 @@ func (api *API) Send() bool {
 	if api.Boundary != nil {
 		api.Buffer.WriteString("\r\n")
 		api.Buffer.WriteString("--" + api.Boundary.(string) + "--")
-		auth := smtp.PlainAuth("", config.MailUser, config.MailPass, config.MailHost)
-		addr := config.MailHost + ":" + config.MailPort
+		auth := smtp.PlainAuth("", api.Config.MailUser, api.Config.MailPass, api.Config.MailHost)
+		addr := api.Config.MailHost + ":" + api.Config.MailPort
 		err := smtp.SendMail(addr, auth, api.Body.From.Address, []string{api.Body.To.Address}, api.Buffer.Bytes())
 		if err != nil {
 			return false
