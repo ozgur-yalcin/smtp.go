@@ -3,10 +3,13 @@ package mailer
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/tls"
 	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
+	"net"
 	"net/http"
 	"net/mail"
 	"net/smtp"
@@ -107,12 +110,47 @@ func (api *API) Send() bool {
 	if api.Boundary != nil {
 		api.Buffer.WriteString("\r\n")
 		api.Buffer.WriteString("--" + api.Boundary.(string) + "--")
-		auth := smtp.PlainAuth("", api.Config.MailUser, api.Config.MailPass, api.Config.MailHost)
 		addr := api.Config.MailHost + ":" + api.Config.MailPort
-		err := smtp.SendMail(addr, auth, api.Body.From.Address, []string{api.Body.To.Address}, api.Buffer.Bytes())
+		host, _, _ := net.SplitHostPort(api.Config.MailHost)
+		auth := smtp.PlainAuth("", api.Config.MailUser, api.Config.MailPass, host)
+		tlsconfig := &tls.Config{
+			InsecureSkipVerify: true,
+			ServerName:         host,
+		}
+		c, err := smtp.Dial(addr)
 		if err != nil {
+			log.Println(err)
 			return false
 		}
+		c.StartTLS(tlsconfig)
+		if err = c.Auth(auth); err != nil {
+			log.Println(err)
+			return false
+		}
+		if err = c.Mail(api.Body.From.Address); err != nil {
+			log.Println(err)
+			return false
+		}
+		if err = c.Rcpt(api.Body.To.Address); err != nil {
+			log.Println(err)
+			return false
+		}
+		w, err := c.Data()
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+		_, err = w.Write(api.Buffer.Bytes())
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+		err = w.Close()
+		if err != nil {
+			log.Println(err)
+			return false
+		}
+		c.Quit()
 		return true
 	} else {
 		return false
