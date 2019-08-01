@@ -111,7 +111,7 @@ func (api *API) Send() bool {
 		api.Buffer.WriteString("\r\n")
 		api.Buffer.WriteString("--" + api.Boundary.(string) + "--")
 		addr := api.Config.MailHost + ":" + api.Config.MailPort
-		host, _, _ := net.SplitHostPort(api.Config.MailHost)
+		host, _, _ := net.SplitHostPort(addr)
 		auth := smtp.PlainAuth("", api.Config.MailUser, api.Config.MailPass, host)
 		tlsconfig := &tls.Config{
 			InsecureSkipVerify: true,
