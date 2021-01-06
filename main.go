@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/mail"
 
-	mailer "github.com/OzqurYalcin/mailer/src"
+	mailer "github.com/ozgur-soft/mailer/src"
 )
 
 func main() {

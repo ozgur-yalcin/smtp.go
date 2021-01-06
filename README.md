@@ -6,7 +6,7 @@ The MIT License (MIT). Please see License File for more information.
 
 # Installation
 ```bash
-go get github.com/OzqurYalcin/mailer
+go get github.com/ozgur-soft/mailer
 ```
 
 # Usage
@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"net/mail"
 
-	mailer "github.com/OzqurYalcin/mailer/src"
+	mailer "github.com/ozgur-soft/mailer/src"
 )
 
 func main() {
