@@ -28,6 +28,7 @@ type API struct {
 	Buffer   *bytes.Buffer
 	Boundary interface{}
 	Config   Config
+	Header   []string
 	Body     struct {
 		To      mail.Address
 		From    mail.Address
@@ -43,22 +44,25 @@ func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) 
 	api.Body.To = to
 	api.Body.Subject = subject
 	api.Body.Message = message
-	header := []string{}
-	header = append(header, fmt.Sprintf("%s: %s", "To", api.Body.To.String()))
-	header = append(header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
-	header = append(header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
-	header = append(header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
-	header = append(header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary="`+api.Boundary.(string)+`"`))
-	header = append(header, fmt.Sprintf("%s", ""))
-	header = append(header, fmt.Sprintf("--%s", api.Boundary.(string)))
-	header = append(header, fmt.Sprintf("%s", ""))
-	api.Buffer.WriteString(strings.Join(header, "\r\n"))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "To", api.Body.To.String()))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary="`+api.Boundary.(string)+`"`))
+	api.Header = append(api.Header, fmt.Sprintf("%s", ""))
+	api.Header = append(api.Header, fmt.Sprintf("--%s", api.Boundary.(string)))
+	api.Header = append(api.Header, fmt.Sprintf("%s", ""))
+	api.Buffer.WriteString(strings.Join(api.Header, "\r\n"))
 	content := []string{}
 	content = append(content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=UTF-8`))
 	content = append(content, fmt.Sprintf("%s", ""))
 	content = append(content, fmt.Sprintf("%s", api.Body.Message))
 	api.Buffer.WriteString(strings.Join(content, "\r\n"))
 	return
+}
+
+func (api *API) AddHeader(key, value string) {
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", key, value))
 }
 
 func (api *API) SetBoundary() {
