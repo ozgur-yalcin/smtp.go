@@ -38,7 +38,7 @@ type API struct {
 	}
 }
 
-func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) {
+func (api *API) SetHeaders(from, to mail.Address, subject, message, charset interface{}) {
 	api.Buffer = bytes.NewBuffer(nil)
 	api.SetBoundary()
 	api.Body.From = from
@@ -49,12 +49,12 @@ func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) 
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
-	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;boundary="`+api.Boundary.(string)+`";charset=utf-8`))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `multipart/mixed;charset=`+charset.(string)+`;boundary="`+api.Boundary.(string)))
 	api.Header = append(api.Header, fmt.Sprintf("%s", ""))
 	api.Header = append(api.Header, fmt.Sprintf("--%s", api.Boundary.(string)))
 	api.Header = append(api.Header, fmt.Sprintf("%s", ""))
 	api.Buffer.WriteString(strings.Join(api.Header, "\r\n"))
-	api.Content = append(api.Content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=utf-8`))
+	api.Content = append(api.Content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset=`+charset.(string)))
 	api.Content = append(api.Content, fmt.Sprintf("%s", ""))
 	api.Content = append(api.Content, fmt.Sprintf("%s", api.Body.Message))
 	api.Buffer.WriteString(strings.Join(api.Content, "\r\n"))
