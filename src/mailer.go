@@ -62,10 +62,7 @@ func (api *API) Send() bool {
 	addr := api.Config.MailHost + ":" + api.Config.MailPort
 	host, _, _ := net.SplitHostPort(addr)
 	auth := smtp.PlainAuth("", api.Config.MailUser, api.Config.MailPass, host)
-	tlsconfig := &tls.Config{
-		InsecureSkipVerify: true,
-		ServerName:         host,
-	}
+	tlsconfig := &tls.Config{InsecureSkipVerify: true, ServerName: host}
 	c, err := smtp.Dial(addr)
 	if err != nil {
 		log.Println(err)
