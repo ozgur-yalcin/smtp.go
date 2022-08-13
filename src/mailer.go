@@ -19,12 +19,11 @@ type Config struct {
 }
 
 type API struct {
-	Buffer   *bytes.Buffer
-	Boundary interface{}
-	Config   Config
-	Header   []string
-	Content  []string
-	Body     struct {
+	Buffer  *bytes.Buffer
+	Config  Config
+	Header  []string
+	Content []string
+	Body    struct {
 		To      mail.Address
 		From    mail.Address
 		Subject interface{}
@@ -44,7 +43,6 @@ func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) 
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
 	api.Header = append(api.Header, fmt.Sprintf("%s", ""))
-	api.Header = append(api.Header, fmt.Sprintf("--%s", api.Boundary.(string)))
 	api.Header = append(api.Header, fmt.Sprintf("%s", ""))
 	api.Buffer.WriteString(strings.Join(api.Header, "\r\n"))
 	api.Content = append(api.Content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
