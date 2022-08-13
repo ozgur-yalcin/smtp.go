@@ -38,7 +38,7 @@ func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) 
 	api.Body.Subject = subject
 	api.Body.Message = message
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
-	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `text/html`))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "To", api.Body.To.String()))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
