@@ -37,19 +37,17 @@ func (api *API) SetHeaders(from, to mail.Address, subject, message interface{}) 
 	api.Body.To = to
 	api.Body.Subject = subject
 	api.Body.Message = message
-	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "To", api.Body.To.String()))
-	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
-	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Mime-Version", "1.0"))
 	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
-	api.Header = append(api.Header, "")
-	api.Header = append(api.Header, "")
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "From", api.Body.From.String()))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "To", api.Body.To.String()))
+	api.Header = append(api.Header, fmt.Sprintf("%s: %s", "Subject", api.Body.Subject))
+	api.Header = append(api.Content, "")
 	api.Buffer.WriteString(strings.Join(api.Header, "\r\n"))
-	api.Content = append(api.Content, fmt.Sprintf("%s: %s", "Content-Type", `text/html;charset="utf-8"`))
 	api.Content = append(api.Content, "")
 	api.Content = append(api.Content, fmt.Sprintf("%s", api.Body.Message))
+	api.Content = append(api.Content, "")
 	api.Buffer.WriteString(strings.Join(api.Content, "\r\n"))
-	return
 }
 
 func (api *API) AddHeader(key, value string) {
