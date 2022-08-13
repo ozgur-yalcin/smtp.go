@@ -1,5 +1,5 @@
 # Smtp.go
-Simple library for sending utf-8 e-mails and attachments via smtp with golang
+Simple library for sending utf-8 e-mails via smtp with golang
 
 # License
 The MIT License (MIT). Please see License File for more information.
