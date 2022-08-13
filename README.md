@@ -24,7 +24,6 @@ func main() {
 	config := smtp.Config{MailHost: "", MailPort: "", MailUser: "", MailPass: ""}
 	api := &smtp.API{Config: config}
 	api.SetHeaders(mail.Address{"From Name", "from@example.com"}, mail.Address{"To Name", "to@example.com"}, "Title", "Message")
-	// api.AttachFile("file.pdf")
 	send := api.Send()
 	if send {
 		fmt.Println("SENT!")
