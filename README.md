@@ -6,7 +6,7 @@ The MIT License (MIT). Please see License File for more information.
 
 # Installation
 ```bash
-go get github.com/ozgur-soft/smtp.go
+go get github.com/ozgur-yalcin/smtp.go
 ```
 
 # Usage
@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"net/mail"
 
-	smtp "github.com/ozgur-soft/smtp.go/src"
+	smtp "github.com/ozgur-yalcin/smtp.go/src"
 )
 
 func main() {
