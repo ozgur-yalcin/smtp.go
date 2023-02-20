@@ -1,3 +1,3 @@
-module github.com/ozgur-soft/smtp.go
+module github.com/ozgur-yalcin/smtp.go
 
 go 1.18
